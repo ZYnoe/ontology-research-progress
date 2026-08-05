@@ -164,6 +164,17 @@ a:hover {
   text-align: center;
 }
 
+main .card h3 {
+  margin: 1.5rem 0 0.4rem;
+  font-size: 1.05rem;
+}
+
+main .card h4 {
+  margin: 1.15rem 0 0.35rem;
+  font-size: 0.95rem;
+  color: var(--accent);
+}
+
 code {
   background: var(--accent-soft);
   border-radius: 4px;

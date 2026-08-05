@@ -37,18 +37,105 @@
       <section class="card">
         <h2>Track A1 — Build the ontology (.ttl) from 소재 연구데이터 표준어휘 : 2025-2</h2>
 
-        <h3>Step 0: inventory the source vocabulary (week 1)</h3>
-        <p>Before any modeling, I need to characterize the 2025-2 release precisely.
-          Questions I will answer, with the answers written into a short spec:</p>
+        <h3>Step 0: recover a structured term list from the PDF — current blocker</h3>
+        <p>I have the complete 2025-2 vocabulary, but <strong>only as a PDF</strong>.
+          That creates two problems: one routine, and one I want the professor's input
+          on, because it decides the shape of everything downstream.</p>
+
+        <h4>Problem 1 — extraction (routine, ~3 days)</h4>
         <ul>
-          <li>Distribution format (XLSX / CSV / PDF), number of terms, and whether a
-            machine-readable version exists.</li>
-          <li>Which fields each term carries: term ID, Korean preferred label, English
-            label, definition, category (분류체계) path, synonyms, unit, data type,
-            deprecation status.</li>
-          <li>Whether the classification is a strict tree, a DAG, or a flat faceted
-            list — this determines whether it maps cleanly onto <code>skos:broader</code>.</li>
-          <li>Licensing and redistribution terms, since I intend to publish the .ttl.</li>
+          <li><strong>First check:</strong> does the PDF have a real text layer, or is it
+            scanned images? <code>pdffonts</code> / <code>pdftotext</code> answers this in
+            minutes and decides whether this is a parsing job or an OCR job.</li>
+          <li><strong>If born-digital:</strong> <code>pdfplumber</code> while
+            <em>retaining character coordinates</em> (this matters for Problem 2);
+            <code>camelot</code> or <code>tabula</code> if the terms sit in ruled tables.</li>
+          <li><strong>If scanned:</strong> Korean OCR (PaddleOCR, or Tesseract with
+            <code>kor</code>), then a second pass using the extracted term list itself as
+            a correction lexicon — domain terms are exactly what generic OCR gets wrong.</li>
+          <li><strong>Validation:</strong> compare the recovered term count against the
+            count the document states in its own front matter, and hand-check a random
+            sample of ~30 entries against the PDF. I will not proceed on an unvalidated
+            extraction.</li>
+          <li><strong>Output:</strong> one row per term carrying whatever fields the
+            document actually provides — term ID, 국문 표제어, English label, definition,
+            unit, synonyms, source note, deprecation status.</li>
+        </ul>
+
+        <h4>Problem 2 — the 분류체계, which is what I am actually stuck on</h4>
+        <p>My difficulty is that the classification is not something I can read off the
+          PDF as data. Before choosing a method I need to establish which of four
+          situations we are in — this is answerable by inspection in an afternoon, but
+          the four lead to completely different work, so I want to agree on the fallback
+          in advance:</p>
+        <ol>
+          <li><strong>Hierarchy is visual</strong> — carried by indentation, numbering
+            (1 / 1.1 / 1.1.1), or heading levels. Recoverable, <em>but only if extraction
+            preserves x/y coordinates</em>: cluster the left-edge x-positions into indent
+            levels and read depth off the cluster. Plain text extraction destroys exactly
+            this signal, which I suspect is why the structure currently looks
+            unrecoverable to me.</li>
+          <li><strong>Hierarchy is encoded in the term ID</strong> — a notation scheme
+            where the code prefix identifies the parent. Best case; parse the code and the
+            tree falls out.</li>
+          <li><strong>Hierarchy lives only in the document structure</strong> — chapters
+            and sections containing term tables. Reconstruct the path by tracking the
+            current heading while walking pages in order.</li>
+          <li><strong>There is no hierarchy</strong> — a flat glossary with a 분야/category
+            column, i.e. a faceted list rather than a tree. In that case
+            <code>skos:broader</code> is simply the wrong construct and I should use
+            <code>skos:inScheme</code> with a <code>skos:Collection</code> per facet.</li>
+        </ol>
+
+        <h4>What I do if the structure genuinely is not in the document</h4>
+        <p>The governing principle: <strong>never invent hierarchy and attribute it to
+          the standard.</strong> The fallback ladder:</p>
+        <ol>
+          <li><strong>Ship v0.1 flat.</strong> SKOS explicitly permits a scheme with no
+            <code>broader</code> relations at all. A flat, complete, correctly-labelled
+            vocabulary is lossless, honest, and immediately usable — and it unblocks
+            every other track.</li>
+          <li><strong>Add hierarchy as a separate overlay file</strong>
+            (<code>mat-voc-hierarchy.ttl</code>), never merged into the vocabulary file,
+            with our inferred links explicitly marked as ours. Anyone can then take the
+            standard without our interpretation of it.</li>
+          <li><strong>Candidate sources for that overlay, cheapest first:</strong> term-ID
+            codes; document chapter structure; Korean lexical head-matching (compound
+            nouns are head-final, so a term ending in 강 is a strong candidate for
+            <code>skos:broader</code> 강) — crude but surprisingly effective as a first
+            pass; then LLM-proposed <em>isA</em> links with self-consistency voting, i.e.
+            the OntoGen method; then alignment to EMMO/PMDco to inherit their upper
+            structure.</li>
+          <li><strong>Expert validation on a sample before anything is promoted</strong>
+            into a released file, with inter-annotator agreement recorded rather than
+            assumed.</li>
+        </ol>
+
+        <h4>Why this blocker is actually an opportunity</h4>
+        <p>Inducing a taxonomy when none is machine-readable is precisely the problem
+          OntoGen was built for. Both outcomes are good for us:</p>
+        <ul>
+          <li><strong>If the PDF does contain the official 분류체계</strong> (cases 1–3),
+            then once extracted it becomes <em>ground truth</em> — and running an
+            OntoGen-style pipeline against the term list gives a reconstruction benchmark
+            directly parallel to the paper's ElementKG experiment (term accuracy,
+            hierarchical F1, leaf-node accuracy). As far as I know, no Korean-language
+            materials benchmark of that kind exists.</li>
+          <li><strong>If it does not</strong> (case 4), then taxonomy induction is a
+            genuine contribution rather than a preprocessing chore.</li>
+        </ul>
+        <p>Either way the PDF constraint <em>produces</em> the evaluation setup instead
+          of blocking it. That reframing is the main thing I want to check with the
+          professor.</p>
+
+        <h4>Two things I still need</h4>
+        <ul>
+          <li><strong>The source file behind the PDF.</strong> If the committee holds an
+            XLSX or a database export, one email removes Problem 1 entirely and probably
+            Problem 2 as well. Highest-leverage item on this whole page — does the lab
+            have a channel to ask?</li>
+          <li><strong>Licensing and redistribution terms</strong>, since I intend to
+            publish the .ttl openly.</li>
         </ul>
 
         <h3>Step 1: competency questions first, not classes first</h3>
@@ -381,8 +468,11 @@
         </ul>
         <h3>Main risks</h3>
         <ul>
-          <li>The 2025-2 release may not be machine-readable, which would add ~1 week of
-            extraction work. I will know within days.</li>
+          <li><strong>Known, not hypothetical:</strong> 2025-2 is PDF-only, so weeks 1–2
+            include extraction and classification recovery (Step 0). If the PDF turns out
+            to be scanned rather than born-digital, add ~1 week for OCR and correction.
+            If the 분류체계 is not recoverable at all, v0.1 ships flat and the hierarchy
+            overlay moves to weeks 5–8.</li>
           <li>No lab instance data available in time → fall back to public databases for
             the A-box and note the limitation explicitly.</li>
           <li>EMMO alignment is deep work; if the professor wants it as a requirement,
@@ -403,8 +493,12 @@
             required.</li>
           <li>Does the lab have existing experimental/computational data I can use for
             the A-box, and who owns access to it?</li>
-          <li>Is there any relationship or obligation toward the 표준어휘 committee —
-            should we plan to feed corrections back to them?</li>
+          <li><strong>Can we get the source file behind the 2025-2 PDF?</strong> Is there
+            a channel to the 표준어휘 committee — and should we plan to feed corrections
+            back to them? This is the single item that would most change the schedule.</li>
+          <li>If the 분류체계 cannot be recovered from the PDF, is a <strong>flat v0.1
+            plus a separately-attributed hierarchy overlay</strong> acceptable, or does
+            the lab need a full tree from the first release?</li>
           <li>DGX: procurement status, my admin authority, and whether off-campus access
             is in scope.</li>
           <li>Reaction to the A-box/T-box ablation — worth running as a formal
