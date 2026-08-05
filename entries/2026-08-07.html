@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>2026-08-07 · Research plan for 1:1 with Prof. Woosun Jang</title>
+  <link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+  <div class="container">
+    <p class="breadcrumb"><a href="../index.html">← Back to index</a></p>
+
+    <header class="entry-header">
+      <h1>Research Plan — 1:1 with Prof. Woosun Jang</h1>
+      <p class="entry-date">2026-08-07 · in-person meeting agenda</p>
+    </header>
+
+    <main>
+
+      <section class="card">
+        <h2>Purpose of this meeting</h2>
+        <p>Agree on the scope and sequencing of two parallel tracks for the coming
+          semester, and get a decision on one open modeling question that blocks the
+          ontology design.</p>
+        <ul>
+          <li><strong>Track A (science)</strong> — ontology → knowledge graph → LLM-based
+            discovery, built on <em>소재 연구데이터 표준어휘 : 2025-2</em>.</li>
+          <li><strong>Track B (engineering)</strong> — bring up the DGX Station as
+            shared lab infrastructure with multi-user access.</li>
+          <li><strong>Open question</strong> — whether the A-box / T-box distinction is
+            as interchangeable as the OntoGen paper implies.</li>
+        </ul>
+        <p class="muted">Suggested time split: 15 min Track A · 10 min Track B ·
+          15 min open question · 5 min decisions and next meeting.</p>
+      </section>
+
+      <section class="card">
+        <h2>Track A1 — Build the ontology (.ttl) from 소재 연구데이터 표준어휘 : 2025-2</h2>
+
+        <h3>Step 0: inventory the source vocabulary (week 1)</h3>
+        <p>Before any modeling, I need to characterize the 2025-2 release precisely.
+          Questions I will answer, with the answers written into a short spec:</p>
+        <ul>
+          <li>Distribution format (XLSX / CSV / PDF), number of terms, and whether a
+            machine-readable version exists.</li>
+          <li>Which fields each term carries: term ID, Korean preferred label, English
+            label, definition, category (분류체계) path, synonyms, unit, data type,
+            deprecation status.</li>
+          <li>Whether the classification is a strict tree, a DAG, or a flat faceted
+            list — this determines whether it maps cleanly onto <code>skos:broader</code>.</li>
+          <li>Licensing and redistribution terms, since I intend to publish the .ttl.</li>
+        </ul>
+
+        <h3>Step 1: competency questions first, not classes first</h3>
+        <p>I want to write ~30 competency questions before touching Protégé — the
+          standard NeOn practice, and they double as the acceptance test suite for the
+          KG later (each becomes a SPARQL query). Examples in our domain:</p>
+        <ul>
+          <li>"Which samples of composition X were characterized by XRD and show
+            property Y above threshold Z?"</li>
+          <li>"Which synthesis routes have been applied to material class C, and by
+            which instrument?"</li>
+          <li>"What measurements exist for property P, and what are their units and
+            uncertainty?"</li>
+        </ul>
+        <p>If a term in the 표준어휘 is never needed by any competency question, it
+          goes into the vocabulary layer but not into the reasoning layer. This keeps
+          the OWL T-box small enough to stay decidable and maintainable.</p>
+
+        <h3>Step 2: two-layer architecture (my proposal)</h3>
+        <p>Rather than forcing every standard term to become an OWL class, I propose a
+          deliberate split:</p>
+        <ul>
+          <li><strong>Layer 1 — SKOS vocabulary layer.</strong> The entire 표준어휘
+            published 1:1 as a <code>skos:ConceptScheme</code>: every term is a
+            <code>skos:Concept</code> with <code>skos:prefLabel</code>@ko/@en,
+            <code>skos:definition</code>, <code>skos:broader</code>,
+            <code>skos:altLabel</code> for synonyms, and
+            <code>skos:notation</code> carrying the official term ID. This is lossless
+            and preserves the standard's authority — nothing is reinterpreted.</li>
+          <li><strong>Layer 2 — OWL domain layer.</strong> A deliberately small T-box
+            (~15–25 classes) covering the entities we actually reason over:
+            <code>Material</code>, <code>Sample</code>, <code>Process</code>,
+            <code>Characterization</code>, <code>Property</code>,
+            <code>Measurement</code>, <code>Instrument</code>, <code>Condition</code>,
+            <code>Dataset</code>, plus object properties with declared domain/range
+            and disjointness axioms.</li>
+          <li><strong>The bridge.</strong> Each OWL class carries
+            <code>rdfs:seeAlso</code> / <code>skos:exactMatch</code> to its 표준어휘
+            concept. This is where OWL 2 punning earns its keep — see the open
+            question below.</li>
+        </ul>
+        <p>The payoff: the standard stays intact and citable, while the reasoning layer
+          stays small. Reviewers of a future paper can check either layer independently.</p>
+
+        <h3>Step 3: reuse before inventing</h3>
+        <p>I want to align with existing materials ontologies rather than build in
+          isolation — this is what makes the result publishable rather than a local
+          data-cleaning exercise. Candidates to evaluate for alignment:</p>
+        <ul>
+          <li><strong>EMMO</strong> (Elementary Multiperspective Material Ontology) —
+            the de-facto European upper ontology for materials.</li>
+          <li><strong>PMDco</strong> (Platform MaterialDigital Core Ontology) and the
+            <strong>NFDI-MatWerk</strong> ontologies — closest in intent to what we are
+            doing, i.e. wrapping a national materials-data standard.</li>
+          <li><strong>MDO</strong> (Materials Design Ontology) — for computational /
+            DFT-derived data specifically.</li>
+          <li><strong>CHAMEO</strong> — characterization methodology.</li>
+          <li><strong>QUDT</strong> for units and quantity kinds, <strong>PROV-O</strong>
+            for provenance, <strong>DCAT</strong> for dataset-level metadata.</li>
+        </ul>
+        <p class="muted">Decision needed: is alignment to EMMO a requirement (adds
+          rigor, costs ~3 weeks) or a nice-to-have for a later version?</p>
+
+        <h3>Step 4: engineering and QC</h3>
+        <ul>
+          <li>Converter: Python + <code>rdflib</code>, XLSX → Turtle, deterministic and
+            re-runnable, so a 2026-1 release regenerates cleanly.</li>
+          <li>IRI policy: stable base URI, readable English local names, Korean carried
+            in labels not IRIs. <code>owl:versionIRI</code> mirroring the
+            <code>2025-2</code> release tag.</li>
+          <li>Validation: <code>pySHACL</code> shapes, ELK/HermiT consistency check,
+            OOPS! pitfall scan, ROBOT for release packaging, WIDOCO for HTML docs.</li>
+          <li>Everything in git, ontology docs published to GitHub Pages alongside this
+            log.</li>
+        </ul>
+        <p><strong>Deliverable:</strong> <code>mat-voc-2025-2.ttl</code> (full SKOS) +
+          <code>mat-onto-0.1.ttl</code> (OWL T-box, one pilot 분류 branch), by end of week 4.</p>
+      </section>
+
+      <section class="card">
+        <h2>Track A2 — Populate the knowledge graph</h2>
+        <p>The ontology is the schema; the KG is the data. The most important open item
+          here is <em>where the instance data comes from</em>, and that is a question
+          for the professor.</p>
+
+        <h3>Candidate data sources, in the order I would try them</h3>
+        <ul>
+          <li><strong>Lab-internal records</strong> — our own experiments and DFT
+            calculations. Highest value (nobody else has it), hardest to normalize.</li>
+          <li><strong>Public databases</strong> — Materials Project, OQMD, AFLOW, NOMAD
+            via their APIs. Immediate volume, good for testing the pipeline at scale
+            before real data arrives.</li>
+          <li><strong>Literature extraction</strong> — the OntoGen-style LLM pipeline,
+            run against our own corpus. This is the part that reuses the paper directly.</li>
+        </ul>
+        <p>My recommendation: build the pipeline against public data first so it is
+          debugged by the time lab data is ready, then swap the source.</p>
+
+        <h3>Non-negotiable design constraints</h3>
+        <ul>
+          <li><strong>Provenance on every assertion.</strong> Every triple traceable via
+            PROV-O to a DOI, an instrument run, or a calculation ID. Without this a
+            research KG is not defensible — and it is also what makes the RAG answers
+            citable in step A3.</li>
+          <li><strong>Unit normalization at ingest</strong> via QUDT. Mixed units are
+            the single most common failure mode in materials KGs.</li>
+          <li><strong>Explicit entity resolution</strong> — a documented rule for when
+            two records denote the same material, with <code>owl:sameAs</code> only
+            where we are confident.</li>
+        </ul>
+
+        <h3>Storage decision to make at the meeting</h3>
+        <ul>
+          <li><strong>RDF triplestore</strong> (Apache Jena Fuseki, or GraphDB Free) —
+            native SPARQL 1.1, OWL reasoning, standards-compliant, exports cleanly.</li>
+          <li><strong>Neo4j</strong> (property graph) — better tooling for GraphRAG and
+            graph algorithms, but loses formal semantics.</li>
+        </ul>
+        <p><strong>My recommendation:</strong> RDF store as the single source of truth,
+          with a scripted projection into Neo4j when GraphRAG needs it. We keep the
+          semantics and still get the tooling; the cost is one export script.</p>
+      </section>
+
+      <section class="card">
+        <h2>Track A3 — LLM over the KG for discovery</h2>
+        <p>This is where the work becomes a result rather than an infrastructure
+          project. Two distinct goals, which I want to keep separate:</p>
+
+        <h3>Goal 1: grounded retrieval (near-term, ~6 weeks)</h3>
+        <p>Four approaches to implement and compare on the same corpus:</p>
+        <ul>
+          <li><strong>Baseline:</strong> plain vector RAG over the source text. No graph.</li>
+          <li><strong>Schema-aware text-to-SPARQL:</strong> the T-box is placed in the
+            prompt, the LLM emits SPARQL, we execute it. This directly exploits our
+            ontology and gives exact, verifiable answers with provenance.</li>
+          <li><strong>GraphRAG</strong> (community-summary style, local and global
+            search) over the KG projection.</li>
+          <li><strong>Hybrid:</strong> vector search over <code>skos:definition</code>
+            for entity linking, then structured traversal from the linked entities.</li>
+        </ul>
+        <p>My prior is that hybrid wins, and that the interesting result is
+          <em>how much the ontology layer contributes</em> — which is an ablation, not
+          a demo.</p>
+
+        <h3>Goal 2: actual discovery (the paper story)</h3>
+        <p>Retrieval alone is a tool paper. The stronger story closes the loop with the
+          lab's existing computational strength:</p>
+        <ol>
+          <li>Run link prediction / missing-edge detection over the populated KG to
+            surface material–property combinations that <em>should</em> exist but are
+            unreported.</li>
+          <li>Have the LLM rank and rationalize those candidates against the literature
+            in the graph.</li>
+          <li><strong>Validate the top candidates with DFT.</strong> This is the step
+            that turns a graph artifact into a materials-science claim, and it is
+            exactly where Prof. Jang's group has the capability.</li>
+        </ol>
+        <p class="muted">Even a small number of validated predictions makes this a
+          Digital Discovery / npj Computational Materials submission rather than a
+          workshop paper.</p>
+
+        <h3>Evaluation</h3>
+        <ul>
+          <li>Gold set of ~50 competency questions with expert-verified answers
+            (reuses the Step 1 output — no extra work).</li>
+          <li>Metrics: execution accuracy, answer correctness, hallucination rate,
+            and citation validity (does every claim resolve to a real provenance node?).</li>
+          <li>Ablations: with/without ontology; SKOS-only vs full OWL T-box; and the
+            A-box/T-box variant described in the open question below.</li>
+        </ul>
+        <p><strong>Serving note:</strong> all models run locally on the DGX via vLLM.
+          Unpublished lab data never leaves the lab network. This is the strongest
+          argument for Track B, and I will present it that way.</p>
+      </section>
+
+      <section class="card">
+        <h2>Track B — DGX Station as shared lab infrastructure</h2>
+        <p>Goal: every lab member can run GPU work without coordinating by messenger,
+          without stepping on each other's memory, and without needing me to log in for
+          them.</p>
+
+        <h3>Questions to confirm first</h3>
+        <ul>
+          <li>Exact model and GPU configuration — is the machine already procured, or is
+            this still a budget request?</li>
+          <li>Do I have root / admin authority, or does it go through campus IT?</li>
+          <li>Network posture: campus-internal only, VPN, or does off-campus access need
+            to work?</li>
+          <li>Do external collaborators or visiting students get accounts?</li>
+        </ul>
+
+        <h3>Proposed build, four weeks</h3>
+        <ul>
+          <li><strong>Week 1 — base.</strong> OS install, NVIDIA driver + CUDA toolkit,
+            per-person user accounts, SSH key-only authentication (no passwords),
+            fail2ban, no services exposed to the public internet. Shared
+            <code>/data</code> with group permissions and per-user quotas.</li>
+          <li><strong>Week 2 — GPU sharing.</strong> Slurm as a single-node scheduler
+            with <code>gres=gpu</code>, so jobs queue instead of colliding. Container
+            runtime (Docker with <code>--gpus</code>, or enroot/pyxis under Slurm) so
+            everyone brings their own environment and nobody breaks the system Python.
+            If the hardware supports MIG, evaluate partitioning for hard isolation of
+            small interactive jobs.</li>
+          <li><strong>Week 3 — services.</strong> JupyterHub for members who prefer
+            notebooks over the CLI; Fuseki/GraphDB for the KG; a vLLM endpoint for the
+            RAG work. All behind a reverse proxy, all authenticated.</li>
+          <li><strong>Week 4 — handover.</strong> A written usage policy (fair-share
+            expectations, how to request a long job, data retention), monitoring
+            (DCGM exporter + Grafana, or <code>nvitop</code> for a lightweight start),
+            a backup plan for <code>/data</code>, and a 30-minute onboarding session
+            for the lab.</li>
+        </ul>
+        <p><strong>The point I want to make in the meeting:</strong> the failure mode
+          for shared GPU machines is not technical, it is social — one person fills the
+          memory and everyone else stops working. The scheduler and the written policy
+          are what prevent that, and they take a week. I would rather spend that week
+          now than re-litigate it every month.</p>
+        <p class="muted">Ongoing cost: roughly half a day per month of maintenance,
+          which I am proposing to own.</p>
+      </section>
+
+      <section class="card">
+        <h2>Open research question — are A-box and T-box interchangeable?</h2>
+
+        <h3>Where the confusion comes from</h3>
+        <p>Reading Oarga et al., <em>Digital Discovery</em> 2026, <strong>5</strong>,
+          1269–1279 (OntoGen), two things in the paper make the boundary look fluid:</p>
+        <ul>
+          <li><strong>Definition 2.1</strong> defines an ontology as a conceptualization
+            <code>{C, R, I}</code> — with the set of <em>instances</em> <code>I</code>
+            included <em>inside</em> the ontology. Under the classical description-logic
+            reading, instances are the A-box and sit outside the terminology.</li>
+          <li><strong>Section 2.2.4 (KG instantiation)</strong> assigns class-vs-instance
+            status by <em>position in the graph</em>: "the leaf nodes of the taxonomy are
+            considered to be instances for the KG … Conversely, non-leaf nodes, having
+            children related through isA relationships, are considered classes."</li>
+        </ul>
+        <p>The second point is what actually caused my confusion, and I think the
+          confusion is justified: under that rule, a node's status is <strong>not
+          intrinsic</strong>. Their taxonomy is built incrementally across papers, so a
+          term that is a leaf (and therefore an A-box individual) after iteration 3 can
+          acquire a child at iteration 7 and silently become a T-box class. The same
+          term changes ontological category because of what else happened to be
+          extracted. That genuinely looks like interchangeability.</p>
+
+        <h3>My current position, which I want challenged</h3>
+        <ol>
+          <li><strong>Formally, no — they are not interchangeable.</strong> In OWL DL the
+            T-box holds terminological axioms (<code>rdfs:subClassOf</code>,
+            <code>owl:equivalentClass</code>, domain/range, disjointness) and the A-box
+            holds assertions about individuals (<code>rdf:type</code>, property
+            assertions, <code>owl:sameAs</code>). They support different inference:
+            subsumption and classification vs. instance retrieval and consistency.
+            The concrete asymmetry that bites us: <strong><code>rdfs:subClassOf</code> is
+            transitive, <code>rdf:type</code> is not.</strong> If I model
+            "austenitic stainless steel" as an <em>individual</em> of
+            <code>Steel</code>, then a query for "all subtypes of Steel" will not reach
+            anything below it. Swap the modeling and the query results change. That is
+            a real, testable difference, not a philosophical one.</li>
+          <li><strong>But there are three legitimate ways the boundary moves</strong>,
+            which explains why the paper's usage is not simply wrong:
+            <ul>
+              <li><strong>Punning (OWL 2 DL).</strong> The same IRI may be used as both a
+                class and an individual; the reasoner treats them as two distinct
+                semantic objects that share a name, and decidability is preserved. This
+                is exactly how I plan to bridge the two layers in A1 — "Steel" is a
+                class of samples <em>and</em> an individual concept in the 표준어휘
+                with a term ID.</li>
+              <li><strong>Metaclasses (OWL Full / RDFS).</strong> Genuinely treats classes
+                as individuals, and is undecidable. Avoid.</li>
+              <li><strong>SKOS.</strong> Sidesteps the question entirely — every term is
+                an individual of <code>skos:Concept</code> linked by
+                <code>skos:broader</code>, and no class/instance judgment is ever
+                required. Note that <code>skos:broader</code> is deliberately
+                <em>not</em> transitive (that is <code>skos:broaderTransitive</code>),
+                precisely so vocabularies avoid committing to subsumption.</li>
+            </ul>
+          </li>
+          <li><strong>The criterion I propose for our project:</strong> a term belongs in
+            the T-box if we will ever assert individuals of it; it belongs in the A-box
+            if it is itself a thing in the world with its own identity — <em>this</em>
+            sample, <em>this</em> instrument, <em>this</em> measurement run,
+            <em>this</em> dataset. Applied to the 표준어휘, that puts essentially the
+            entire standard vocabulary in the T-box/SKOS layer, and sources the A-box
+            from lab data. Which means <strong>the OntoGen leaf-node heuristic would be
+            wrong for our use case</strong>: a leaf like "austenitic stainless steel" is
+            a type, not an individual.</li>
+          <li><strong>Resolution.</strong> I do not think this is an error in the paper
+            so much as a scope statement. The authors say so themselves, immediately
+            after Definition 2.1: their definition "represents a computational
+            approximation to formal ontological frameworks rather than a complete
+            logical ontology," reflecting "the practical constraints of automated
+            extraction from natural language." The leaf-node rule is an artifact of
+            needing <em>some</em> automatable criterion, not an ontological claim.
+            It is defensible for zero-shot extraction and not defensible as a modeling
+            principle for a curated standard.</li>
+        </ol>
+
+        <h3>Turning the confusion into an experiment</h3>
+        <p>The question I actually want to ask the professor: <em>does the choice
+          measurably matter downstream?</em> We are in an unusually good position to
+          answer it, because A3 already has an evaluation harness. Same corpus, same
+          questions, three encodings:</p>
+        <ul>
+          <li><strong>(a)</strong> SKOS-flat — everything a concept, no OWL semantics.</li>
+          <li><strong>(b)</strong> Deep OWL T-box + thin A-box — our proposed design.</li>
+          <li><strong>(c)</strong> OntoGen-style leaf-as-instance.</li>
+        </ul>
+        <p>Then measure retrieval and answer quality on the competency-question set.
+          If (b) wins, the ontology engineering effort is justified with evidence rather
+          than assertion. If (a) or (c) is within noise, that is a genuinely interesting
+          negative result about how much formal semantics LLM-based retrieval actually
+          exploits — and worth reporting either way.</p>
+        <p class="muted">This is the item I most want the professor's reaction to,
+          because it determines whether the ontology work is a means or an end.</p>
+      </section>
+
+      <section class="card">
+        <h2>Proposed timeline (Aug–Oct 2026)</h2>
+        <ul>
+          <li><strong>Weeks 1–2 (Aug 7–21):</strong> vocabulary inventory + spec;
+            30 competency questions; DGX base install and user accounts.</li>
+          <li><strong>Weeks 3–4 (Aug 22–Sep 4):</strong> SKOS layer complete; OWL v0.1
+            on one pilot branch; Slurm + containers live.</li>
+          <li><strong>Weeks 5–8 (Sep 5–Oct 2):</strong> OWL T-box v0.5 with alignments;
+            KG populated from public data; triplestore serving; DGX services and
+            handover doc.</li>
+          <li><strong>Weeks 9–12 (Oct 3–30):</strong> GraphRAG prototype; the three-way
+            encoding ablation; evaluation results; draft outline.</li>
+        </ul>
+        <h3>Main risks</h3>
+        <ul>
+          <li>The 2025-2 release may not be machine-readable, which would add ~1 week of
+            extraction work. I will know within days.</li>
+          <li>No lab instance data available in time → fall back to public databases for
+            the A-box and note the limitation explicitly.</li>
+          <li>EMMO alignment is deep work; if the professor wants it as a requirement,
+            weeks 5–8 need to expand and the GraphRAG work slips.</li>
+          <li>DGX procurement delay would block local model serving; mitigate by
+            prototyping on smaller models and swapping in later.</li>
+        </ul>
+      </section>
+
+      <section class="card">
+        <h2>Decisions I need from the professor</h2>
+        <ol>
+          <li>Is the deliverable a <strong>standards-compliant published ontology</strong>,
+            or a <strong>working discovery tool</strong>? The answer changes how much
+            EMMO alignment and formal rigor is worth.</li>
+          <li>Target venue and deadline — Digital Discovery, npj Computational Materials,
+            JCIM, or Scientific Data? This sets the bar for whether DFT validation is
+            required.</li>
+          <li>Does the lab have existing experimental/computational data I can use for
+            the A-box, and who owns access to it?</li>
+          <li>Is there any relationship or obligation toward the 표준어휘 committee —
+            should we plan to feed corrections back to them?</li>
+          <li>DGX: procurement status, my admin authority, and whether off-campus access
+            is in scope.</li>
+          <li>Reaction to the A-box/T-box ablation — worth running as a formal
+            experiment, or should I just pick the principled design and move on?</li>
+        </ol>
+      </section>
+
+      <section class="card">
+        <h2>Reference</h2>
+        <p>A. Oarga, M. Hart, A. M. Bran, M. Lederbauer and P. Schwaller,
+          "Scientific knowledge graph and ontology generation using open large language
+          models," <em>Digital Discovery</em>, 2026, <strong>5</strong>, 1269–1279.
+          DOI: <a href="https://doi.org/10.1039/d5dd00275c">10.1039/d5dd00275c</a>.
+          Code (OntoGen): DOI 10.5281/zenodo.17968980.</p>
+        <p class="muted">Relevant sections for the discussion above: Definition 2.1
+          (ontology as <code>{C, R, I}</code>), Definition 2.2 (KG grounded in the
+          ontology), and §2.2.4 (leaf nodes as KG instances).</p>
+      </section>
+
+    </main>
+
+    <footer class="site-footer">
+      <p><a href="../index.html">← Back to index</a></p>
+    </footer>
+  </div>
+</body>
+</html>
