@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Ontology 研究进度记录，按日期浏览。">
+  <title>Ontology 研究进度</title>
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <div class="container">
+    <header class="site-header">
+      <h1>Ontology 研究进度</h1>
+      <p class="tagline">按日期浏览研究记录</p>
+    </header>
+
+    <section class="card date-jump">
+      <h2>按日期跳转</h2>
+      <p class="muted">选择日期后会自动打开当天的记录；如果那天还没有记录，会给出提示。</p>
+      <form id="date-jump" class="date-form">
+        <input type="date" id="date-input" required>
+        <button type="submit">查看记录</button>
+      </form>
+      <p id="jump-message" class="jump-message hidden" role="status"></p>
+    </section>
+
+    <section class="card entry-list">
+      <h2>全部记录</h2>
+      <!-- entries-start -->
+<p class="entry-count">共 1 篇记录</p>
+<h3>2026 年</h3>
+<h4>8 月</h4>
+<ul>
+<li><a href="entries/2026-08-05.html">2026-08-05 · 初始化研究进度网站</a></li>
+</ul>
+<!-- entries-end -->
+    </section>
+
+    <footer class="site-footer">
+      <p><a href="https://github.com/ZYnoe/ontology-research-progress">GitHub 仓库</a></p>
+    </footer>
+  </div>
+  <script src="assets/index.js"></script>
+</body>
+</html>
