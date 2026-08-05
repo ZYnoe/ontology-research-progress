@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
-"""根据 entries/ 目录下的 HTML 记录，重新生成 index.html 中的记录列表。
+"""Regenerate the entry list in index.html from the HTML files in entries/.
 
-用法:
+Usage:
     python3 scripts/update_index.py
 
-约定:
-    - 每篇记录位于 entries/YYYY-MM-DD.html，文件名中的日期即记录日期
-    - 建议记录 <title> 写成 "YYYY-MM-DD · 标题"（脚本会自动去掉日期前缀）
+Conventions:
+    - Each entry lives at entries/YYYY-MM-DD.html; the date is taken from the
+      filename
+    - Write each entry's <title> as "YYYY-MM-DD · Title" (the script strips the
+      date prefix automatically)
 """
 
 import re
@@ -22,6 +24,21 @@ END_MARKER = "<!-- entries-end -->"
 TITLE_RE = re.compile(r"<title>(.*?)</title>", re.IGNORECASE | re.DOTALL)
 DATE_RE = re.compile(r"(\d{4})-(\d{2})-(\d{2})")
 TITLE_PREFIX_RE = re.compile(r"^\d{4}-\d{2}-\d{2}\s*[·\-—:]\s*")
+MONTH_NAMES = [
+    "",
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+]
 
 
 def parse_entry(path):
@@ -43,11 +60,13 @@ def parse_entry(path):
 
 
 def build_html(entries):
-    out = [f'<p class="entry-count">共 {len(entries)} 篇记录</p>']
+    count = len(entries)
+    label = "entry" if count == 1 else "entries"
+    out = [f'<p class="entry-count">{count} {label} total</p>']
     if not entries:
         out.append(
-            '<p class="empty">还没有记录。添加第一篇后运行 '
-            "<code>python3 scripts/update_index.py</code>。</p>"
+            '<p class="empty">No entries yet. Add your first one and run '
+            "<code>python3 scripts/update_index.py</code>.</p>"
         )
         return out
 
@@ -61,13 +80,13 @@ def build_html(entries):
                 ul_open = False
             current_year = entry["year"]
             current_month = None
-            out.append(f"<h3>{current_year} 年</h3>")
+            out.append(f"<h3>{current_year}</h3>")
         if entry["month"] != current_month:
             if ul_open:
                 out.append("</ul>")
                 ul_open = False
             current_month = entry["month"]
-            out.append(f"<h4>{current_month} 月</h4>")
+            out.append(f"<h4>{MONTH_NAMES[current_month]}</h4>")
         if not ul_open:
             out.append("<ul>")
             ul_open = True
@@ -92,8 +111,8 @@ def main():
     index_text = INDEX_FILE.read_text(encoding="utf-8")
     if START_MARKER not in index_text or END_MARKER not in index_text:
         raise SystemExit(
-            "index.html 中找不到条目标记（<!-- entries-start --> / "
-            "<!-- entries-end -->）"
+            "Could not find the entry markers (<!-- entries-start --> / "
+            "<!-- entries-end -->) in index.html"
         )
 
     head, _, tail = index_text.partition(START_MARKER)
@@ -108,7 +127,7 @@ def main():
         + tail
     )
     INDEX_FILE.write_text(new_text, encoding="utf-8")
-    print(f"已更新 {INDEX_FILE.name}，共 {len(entries)} 篇记录。")
+    print(f"Updated {INDEX_FILE.name} with {len(entries)} entries.")
 
 
 if __name__ == "__main__":

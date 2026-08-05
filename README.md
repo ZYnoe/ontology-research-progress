@@ -1,31 +1,32 @@
-# Ontology 研究进度
+# Ontology Research Progress
 
-用 HTML 记录研究进度，并通过 GitHub Pages 发布，方便在任何设备上访问。
+Track research progress in HTML and publish it via GitHub Pages, so it is
+accessible from any device.
 
-## 目录结构
+## Directory structure
 
 ```
-index.html                     # 首页：按日期跳转 + 全部记录列表
-entries/YYYY-MM-DD.html        # 每天一篇研究记录
-templates/entry-template.html  # 新记录模板
-scripts/update_index.py        # 扫描 entries/ 并重新生成首页索引
-assets/                        # 共享样式和脚本
+index.html                     # Homepage: jump to a date + list of all entries
+entries/YYYY-MM-DD.html        # One research log per day
+templates/entry-template.html  # Template for new entries
+scripts/update_index.py        # Scans entries/ and regenerates the homepage index
+assets/                        # Shared styles and scripts
 ```
 
-## 添加一篇新记录
+## Adding a new entry
 
-1. 复制模板：`cp templates/entry-template.html entries/2026-08-06.html`
-2. 修改 `entries/2026-08-06.html`：
-   - `<title>` 写成 `2026-08-06 · 记录标题`
-   - `<h1>` 写标题，`.entry-date` 写日期
-   - 在正文记录“今日进展 / 遇到的问题 / 下一步计划”
-3. 重新生成首页索引：
+1. Copy the template: `cp templates/entry-template.html entries/2026-08-06.html`
+2. Edit `entries/2026-08-06.html`:
+   - Set `<title>` to `2026-08-06 · Entry title`
+   - Set the `<h1>` title and the `.entry-date` date
+   - Write the log: progress today / issues encountered / next steps
+3. Regenerate the homepage index:
 
    ```bash
    python3 scripts/update_index.py
    ```
 
-4. 提交并推送：
+4. Commit and push:
 
    ```bash
    git add .
@@ -33,16 +34,19 @@ assets/                        # 共享样式和脚本
    git push
    ```
 
-## 启用 GitHub Pages
+## Enabling GitHub Pages
 
-1. 将代码推送到 GitHub（仓库：`ZYnoe/ontology-research-progress`）
-2. 打开仓库 Settings → Pages
-3. Source 选择 **Deploy from a branch**，Branch 选择 `main`，目录选 `/ (root)`
-4. 保存后稍等片刻，站点会发布到 `https://ZYnoe.github.io/ontology-research-progress/`
+1. Push the code to GitHub (repository: `ZYnoe/ontology-research-progress`)
+2. Open the repository Settings → Pages
+3. Source: **Deploy from a branch**, Branch: `main`, directory `/ (root)`
+4. After saving, the site will be published at
+   `https://ZYnoe.github.io/ontology-research-progress/`
 
-> 这是纯静态站点，不需要构建步骤，GitHub 会直接发布仓库里的 HTML。
+> This is a pure static site with no build step; GitHub publishes the HTML in
+> the repository directly.
 
-## 首页用法
+## Using the homepage
 
-- 在“按日期跳转”里选择日期，点击“查看记录”即可打开当天的记录；如果那天没有记录会给出提示。
-- 页面下方会按年份、月份列出全部记录，点击即可进入。
+- In "Jump to a date", pick a date and click "View log" to open that day's
+  entry; if there is no entry yet, you will see a hint.
+- All entries are listed by year and month below; click one to open it.

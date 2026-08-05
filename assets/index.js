@@ -10,7 +10,7 @@
     message.classList.remove("hidden");
   }
 
-  // 默认选中今天（本地时区）
+  // Default to today (local timezone)
   var now = new Date();
   var local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
   input.value = local.toISOString().slice(0, 10);
@@ -28,11 +28,11 @@
         if (res.ok) {
           window.location.href = url;
         } else {
-          showMessage("这一天还没有记录：" + date);
+          showMessage("No entry for this date: " + date);
         }
       })
       .catch(function () {
-        // 本地以 file:// 打开时 fetch 可能不可用，直接跳转
+        // When opened via file://, fetch may be unavailable; navigate directly
         window.location.href = url;
       });
   });
