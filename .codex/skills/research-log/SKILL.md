@@ -28,7 +28,9 @@ entries are plain HTML files in `entries/`, `index.html` lists them, and
    ```
 
    This writes `entries/<same name>.html` and regenerates `index.html`. Use
-   `-o PATH` to override the output and `--no-index` to skip the index update.
+   `-o PATH` to override the output and `--no-index` to skip the index
+   update. It also refreshes the same-day navigation block on every entry
+   page (links between entries that share a date).
 3. Inspect the generated page and the index before committing.
 4. Commit and push to GitHub (`main`) so Pages updates.
 
@@ -38,6 +40,9 @@ entries are plain HTML files in `entries/`, `index.html` lists them, and
   `YYYY-MM-DD · Title` (the index strips this prefix) and keep the
   breadcrumb/footer links (`../index.html`, `../assets/style.css`).
 - Regenerate the index after any change: `python3 scripts/update_index.py`.
+- Refresh same-day navigation links after hand edits:
+  `python3 scripts/add_same_day_nav.py` (idempotent; also run automatically
+  by `md2html.py`).
 - The "Jump to a date" widget filters the homepage entry list by date in place
   (it no longer navigates). Entries carry a `data-date` attribute emitted by
   `update_index.py`, so always regenerate `index.html` with that script after

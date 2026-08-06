@@ -11,6 +11,7 @@ entries/YYYY-MM-DD[-slug].html # Research logs; several pages may share a date
 templates/entry-template.html  # Template for new entries
 scripts/update_index.py        # Scans entries/ and regenerates the homepage index
 scripts/md2html.py             # Converts a Markdown note into an entry page
+scripts/add_same_day_nav.py    # Adds same-day navigation links to entry pages
 assets/                        # Shared styles and scripts
 templates/note-template.md     # Markdown template for new entries
 ```
@@ -57,6 +58,9 @@ python3 scripts/md2html.py notes/2026-08-06.md
   ```
 
   The index is regenerated automatically (use `--no-index` to skip that).
+- Entries sharing a date link to each other: `md2html.py` refreshes the
+  same-day navigation block on every entry page automatically. For entries
+  written by hand, run `python3 scripts/add_same_day_nav.py` to refresh it.
 - Supported syntax: headings, paragraphs, fenced code blocks, blockquotes,
   lists (with nesting), horizontal rules, inline code, bold, italic, links,
   and images.

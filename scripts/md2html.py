@@ -19,6 +19,9 @@ converted without overwriting each other:
     notes/2026-08-06-chunking.md   -> entries/2026-08-06-chunking.html
     notes/2026-08-06-graphrag.md   -> entries/2026-08-06-graphrag.html
 
+After writing the page, the homepage index and the same-day navigation blocks
+on all entry pages are refreshed automatically.
+
 Supported Markdown: headings, paragraphs, fenced code blocks, blockquotes,
 unordered/ordered lists (with nesting), horizontal rules, inline code, bold,
 italic, links, and images. Everything else stays plain text.
@@ -291,6 +294,8 @@ def main(argv=None):
     if not args.no_index:
         from update_index import main as update_index
         update_index()
+        from add_same_day_nav import main as add_same_day_nav
+        add_same_day_nav()
 
 
 if __name__ == "__main__":
