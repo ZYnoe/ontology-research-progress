@@ -1,0 +1,4 @@
+interface:
+  display_name: "Research Log"
+  short_description: "Add notes and publish the research site"
+  default_prompt: "Use $research-log to add today's research note to the site."
