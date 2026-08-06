@@ -66,6 +66,9 @@ images. Unsupported syntax (e.g. tables, task lists) renders as plain text.
   changing it.
 - Git writes (`git add`/`commit`/`push`) fail inside the sandbox because
   `.git` is read-only there; re-run them with escalated permissions.
+- Never commit or push the user's in-progress or unfinished notes. Check
+  `git status` before staging: stage only the files this task changed, and
+  leave the user's untracked/modified notes untouched.
 - When the task involves research content (pipeline, models, open questions),
   read `references/research-context.md` before answering.
 
