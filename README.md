@@ -10,6 +10,7 @@ index.html                     # Homepage: jump to a date + list of all entries
 entries/YYYY-MM-DD.html        # One research log per day
 templates/entry-template.html  # Template for new entries
 scripts/update_index.py        # Scans entries/ and regenerates the homepage index
+scripts/md2html.py             # Converts a Markdown note into an entry page
 assets/                        # Shared styles and scripts
 ```
 
@@ -33,6 +34,25 @@ assets/                        # Shared styles and scripts
    git commit -m "add progress 2026-08-06"
    git push
    ```
+
+## Adding a new entry from Markdown (optional)
+
+Prefer writing notes in Markdown? Convert one directly into an entry page:
+
+```bash
+python3 scripts/md2html.py notes/2026-08-06.md
+```
+
+- The first `# Heading` becomes the entry title.
+- If the file name starts with `YYYY-MM-DD`, that date is used; otherwise
+  today's date is used.
+- The output is written to `entries/YYYY-MM-DD.html` and the index is
+  regenerated automatically (use `--no-index` to skip that).
+- Supported syntax: headings, paragraphs, fenced code blocks, blockquotes,
+  lists (with nesting), horizontal rules, inline code, bold, italic, links,
+  and images.
+- A demo note showing all supported syntax lives in `demo.md` (convert it
+  with `-o` to a scratch path so it does not overwrite a dated entry).
 
 ## Enabling GitHub Pages
 
