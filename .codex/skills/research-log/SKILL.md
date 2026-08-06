@@ -44,9 +44,10 @@ entries are plain HTML files in `entries/`, `index.html` lists them, and
   `python3 scripts/add_same_day_nav.py` (idempotent; also run automatically
   by `md2html.py`).
 - The "Jump to a date" widget filters the homepage entry list by date in place
-  (it no longer navigates). Entries carry a `data-date` attribute emitted by
-  `update_index.py`, so always regenerate `index.html` with that script after
-  adding or removing entries.
+  (it no longer navigates); the "Today" button jumps to and filters today's
+  entries. Entries carry a `data-date` attribute emitted by `update_index.py`,
+  so always regenerate `index.html` with that script after adding or removing
+  entries.
 
 ## Supported Markdown
 

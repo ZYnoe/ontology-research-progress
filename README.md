@@ -82,5 +82,6 @@ python3 scripts/md2html.py notes/2026-08-06.md
 
 - In "Jump to a date", pick a date and click "View log" to filter the entry
   list below to that date; click "Show all" to restore the full list. If
-  there is no entry for the date, a hint is shown instead.
+  there is no entry for the date, a hint is shown instead. The "Today"
+  button sets the date to today and applies the filter immediately.
 - All entries are listed by year and month below; click one to open it.

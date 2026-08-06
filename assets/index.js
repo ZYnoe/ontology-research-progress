@@ -13,7 +13,8 @@
   // Default to today (local timezone)
   var now = new Date();
   var local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
-  input.value = local.toISOString().slice(0, 10);
+  var todayValue = local.toISOString().slice(0, 10);
+  input.value = todayValue;
 
   function showMessage(html) {
     message.innerHTML = html;
@@ -94,13 +95,23 @@
     });
   }
 
+  function applyDateFilter(date) {
+    var visible = applyFilter(date);
+    showFilterMessage(visible, date);
+  }
+
   form.addEventListener("submit", function (event) {
     event.preventDefault();
     var date = input.value;
     if (!date) {
       return;
     }
-    var visible = applyFilter(date);
-    showFilterMessage(visible, date);
+    applyDateFilter(date);
+  });
+
+  var todayBtn = document.getElementById("today-btn");
+  todayBtn.addEventListener("click", function () {
+    input.value = todayValue;
+    applyDateFilter(todayValue);
   });
 })();
