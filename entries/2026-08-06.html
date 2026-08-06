@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>2026-08-06 · PDF text extraction, chunking, and embedding pipeline</title>
+  <link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+  <div class="container">
+    <p class="breadcrumb"><a href="../index.html">← Back to index</a></p>
+
+    <header class="entry-header">
+      <h1>PDF Text Extraction → Chunking → Embedding</h1>
+      <p class="entry-date">2026-08-06</p>
+    </header>
+
+    <main class="card">
+      <h2>Progress today</h2>
+      <ul>
+        <li>Can now extract text information from PDF documents.</li>
+        <li>Implemented chunking in two ways: <strong>semantic chunking</strong> and
+          <strong>word-count (fixed-size) chunking</strong>.</li>
+        <li>Passed the chunked text into an embedding model to complete the embedding
+          step, so the extraction → chunking → embedding pipeline is now in place.</li>
+      </ul>
+
+      <h2>Open question</h2>
+      <p>Should I keep investing time in learning and implementing different RAG
+        techniques — for example, GraphRAG — on top of the current pipeline?</p>
+      <p class="muted">Current pipeline is a straightforward vector RAG foundation:
+        PDF → text → semantic/word-count chunks → embeddings. The question is whether
+        the next step should be retrieval strategy improvements, knowledge-graph-based
+        retrieval (GraphRAG), or something else entirely.</p>
+
+      <h2>Next steps</h2>
+      <ul>
+        <li>Compare retrieval quality between semantic and word-count chunking on a
+          small test set before choosing the default.</li>
+        <li>Decide whether GraphRAG (or another RAG variant) is worth exploring, based
+          on the questions the pipeline needs to answer.</li>
+      </ul>
+    </main>
+
+    <footer class="site-footer">
+      <p><a href="../index.html">← Back to index</a></p>
+    </footer>
+  </div>
+</body>
+</html>
