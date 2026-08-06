@@ -14,6 +14,8 @@ entries are plain HTML files in `entries/`, `index.html` lists them, and
 ## Standard workflow: add a note
 
 1. Write the note as Markdown in `notes/`, named `YYYY-MM-DD[-slug].md`.
+   Start from `templates/note-template.md` if the user does not provide
+   content structure.
    - The first `# Heading` becomes the entry title and is removed from the
      body.
    - The date comes from the file name (fallback: today's date).

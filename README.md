@@ -12,6 +12,7 @@ templates/entry-template.html  # Template for new entries
 scripts/update_index.py        # Scans entries/ and regenerates the homepage index
 scripts/md2html.py             # Converts a Markdown note into an entry page
 assets/                        # Shared styles and scripts
+templates/note-template.md     # Markdown template for new entries
 ```
 
 ## Adding a new entry
@@ -43,7 +44,8 @@ Prefer writing notes in Markdown? Convert one directly into an entry page:
 python3 scripts/md2html.py notes/2026-08-06.md
 ```
 
-- The first `# Heading` becomes the entry title.
+- Start from `templates/note-template.md`, or write your own: the first
+  `# Heading` becomes the entry title.
 - If the file name starts with `YYYY-MM-DD`, that date is used; otherwise
   today's date is used.
 - The output keeps the input file name, so several notes on the same day each
