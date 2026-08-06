@@ -74,6 +74,7 @@ python3 scripts/md2html.py notes/2026-08-06.md
 
 ## Using the homepage
 
-- In "Jump to a date", pick a date and click "View log" to open that day's
-  entry; if there is no entry yet, you will see a hint.
+- In "Jump to a date", pick a date and click "View log" to filter the entry
+  list below to that date; click "Show all" to restore the full list. If
+  there is no entry for the date, a hint is shown instead.
 - All entries are listed by year and month below; click one to open it.

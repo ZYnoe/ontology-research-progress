@@ -36,8 +36,10 @@ entries are plain HTML files in `entries/`, `index.html` lists them, and
   `YYYY-MM-DD · Title` (the index strips this prefix) and keep the
   breadcrumb/footer links (`../index.html`, `../assets/style.css`).
 - Regenerate the index after any change: `python3 scripts/update_index.py`.
-- The "Jump to a date" widget opens `entries/YYYY-MM-DD.html`; keep that base
-  page for a date if the widget should work.
+- The "Jump to a date" widget filters the homepage entry list by date in place
+  (it no longer navigates). Entries carry a `data-date` attribute emitted by
+  `update_index.py`, so always regenerate `index.html` with that script after
+  adding or removing entries.
 
 ## Supported Markdown
 

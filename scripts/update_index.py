@@ -62,7 +62,7 @@ def parse_entry(path):
 def build_html(entries):
     count = len(entries)
     label = "entry" if count == 1 else "entries"
-    out = [f'<p class="entry-count">{count} {label} total</p>']
+    out = [f'<p class="entry-count" id="entry-count">{count} {label} total</p>']
     if not entries:
         out.append(
             '<p class="empty">No entries yet. Add your first one and run '
@@ -91,7 +91,7 @@ def build_html(entries):
             out.append("<ul>")
             ul_open = True
         out.append(
-            f'<li><a href="{entry["url"]}">'
+            f'<li data-date="{entry["date"]}"><a href="{entry["url"]}">'
             f'{entry["date"]} · {entry["title"]}</a></li>'
         )
     if ul_open:
