@@ -7,7 +7,7 @@ accessible from any device.
 
 ```
 index.html                     # Homepage: jump to a date + list of all entries
-entries/YYYY-MM-DD.html        # One research log per day
+entries/YYYY-MM-DD[-slug].html # Research logs; several pages may share a date
 templates/entry-template.html  # Template for new entries
 scripts/update_index.py        # Scans entries/ and regenerates the homepage index
 scripts/md2html.py             # Converts a Markdown note into an entry page
@@ -46,8 +46,15 @@ python3 scripts/md2html.py notes/2026-08-06.md
 - The first `# Heading` becomes the entry title.
 - If the file name starts with `YYYY-MM-DD`, that date is used; otherwise
   today's date is used.
-- The output is written to `entries/YYYY-MM-DD.html` and the index is
-  regenerated automatically (use `--no-index` to skip that).
+- The output keeps the input file name, so several notes on the same day each
+  become their own page without overwriting each other:
+
+  ```bash
+  python3 scripts/md2html.py notes/2026-08-06-chunking.md
+  python3 scripts/md2html.py notes/2026-08-06-graphrag.md
+  ```
+
+  The index is regenerated automatically (use `--no-index` to skip that).
 - Supported syntax: headings, paragraphs, fenced code blocks, blockquotes,
   lists (with nesting), horizontal rules, inline code, bold, italic, links,
   and images.

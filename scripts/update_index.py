@@ -5,8 +5,8 @@ Usage:
     python3 scripts/update_index.py
 
 Conventions:
-    - Each entry lives at entries/YYYY-MM-DD.html; the date is taken from the
-      filename
+    - Each entry lives at entries/YYYY-MM-DD[-slug].html; the date is taken
+      from the filename, so several entries may share a date
     - Write each entry's <title> as "YYYY-MM-DD · Title" (the script strips the
       date prefix automatically)
 """
@@ -99,6 +99,14 @@ def build_html(entries):
     return out
 
 
+def entry_sort_key(entry):
+    """Newest date first; within a date, the plain YYYY-MM-DD.html entry
+    comes first, then additional pages alphabetically by file name."""
+    date_key = tuple(-int(part) for part in entry["date"].split("-"))
+    is_base = entry["url"].endswith(f"{entry['date']}.html")
+    return (date_key, 0 if is_base else 1, entry["url"])
+
+
 def main():
     ENTRIES_DIR.mkdir(exist_ok=True)
     entries = []
@@ -106,7 +114,7 @@ def main():
         entry = parse_entry(path)
         if entry:
             entries.append(entry)
-    entries.sort(key=lambda e: e["date"], reverse=True)
+    entries.sort(key=entry_sort_key)
 
     index_text = INDEX_FILE.read_text(encoding="utf-8")
     if START_MARKER not in index_text or END_MARKER not in index_text:

@@ -5,13 +5,19 @@ Usage:
     python3 scripts/md2html.py notes/2026-08-08.md
 
 Options:
-    -o, --output PATH   Where to write the HTML (default: entries/YYYY-MM-DD.html)
+    -o, --output PATH   Where to write the HTML (default: entries/<same name>.html)
     --no-index          Skip regenerating index.html
 
 The entry title is taken from the first level-1 heading (`# Title`), otherwise
 from the file name. If the file name starts with YYYY-MM-DD, that date is used
 for the entry header. After generating the page, index.html is updated
 automatically unless --no-index is given.
+
+The output keeps the input file name, so several notes on the same day can be
+converted without overwriting each other:
+
+    notes/2026-08-06-chunking.md   -> entries/2026-08-06-chunking.html
+    notes/2026-08-06-graphrag.md   -> entries/2026-08-06-graphrag.html
 
 Supported Markdown: headings, paragraphs, fenced code blocks, blockquotes,
 unordered/ordered lists (with nesting), horizontal rules, inline code, bold,
@@ -246,7 +252,7 @@ def main(argv=None):
     parser.add_argument("input", type=Path, help="Markdown file to convert")
     parser.add_argument(
         "-o", "--output", type=Path,
-        help="Output HTML file (default: entries/YYYY-MM-DD.html)",
+        help="Output HTML file (default: entries/<same name>.html)",
     )
     parser.add_argument(
         "--no-index", action="store_true",
@@ -276,7 +282,7 @@ def main(argv=None):
     date_match = DATE_RE.search(args.input.name)
     date_str = date_match.group(0) if date_match else date.today().isoformat()
 
-    output = args.output or (ROOT / "entries" / f"{date_str}.html")
+    output = args.output or (ROOT / "entries" / f"{args.input.stem}.html")
     output = output.resolve()
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(build_page(title, date_str, render_blocks(lines)), encoding="utf-8")
