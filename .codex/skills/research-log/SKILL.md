@@ -51,8 +51,9 @@ entries are plain HTML files in `entries/`, `index.html` lists them, and
 ## Supported Markdown
 
 Headings, paragraphs, fenced code blocks, blockquotes, ordered and unordered
-lists with nesting, horizontal rules, inline code, bold, italic, links, and
-images. Unsupported syntax (e.g. tables, task lists) renders as plain text.
+lists with nesting, tables, horizontal rules, inline code, bold, italic,
+links, and images. Unsupported syntax (e.g. task lists) renders as plain
+text.
 
 ## Pitfalls
 

@@ -23,8 +23,8 @@ After writing the page, the homepage index and the same-day navigation blocks
 on all entry pages are refreshed automatically.
 
 Supported Markdown: headings, paragraphs, fenced code blocks, blockquotes,
-unordered/ordered lists (with nesting), horizontal rules, inline code, bold,
-italic, links, and images. Everything else stays plain text.
+unordered/ordered lists (with nesting), tables, horizontal rules, inline
+code, bold, italic, links, and images. Everything else stays plain text.
 """
 
 import argparse
@@ -79,6 +79,37 @@ def starts_block(line):
         or re.match(r"^\s*(?:-{3,}|\*{3,}|_{3,})\s*$", line)
         or is_list_item(line)
     )
+
+
+def split_table_cells(line):
+    """Split a pipe-table row into cell strings (outer pipes stripped)."""
+    return [cell.strip() for cell in line.strip().strip("|").split("|")]
+
+
+def is_table_separator(line):
+    """True if the line is a GFM table separator row like |---|---|."""
+    cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
+    has_dash = any("-" in cell for cell in cells)
+    return bool(cells) and has_dash and all(set(cell) <= set("-: ") for cell in cells)
+
+
+def render_table(lines):
+    header = [render_inline(cell) for cell in split_table_cells(lines[0])]
+    body = [
+        [render_inline(cell) for cell in split_table_cells(row)]
+        for row in lines[2:]
+    ]
+    out = ["<table>"]
+    out.append(
+        "<thead><tr>"
+        + "".join(f"<th>{cell}</th>" for cell in header)
+        + "</tr></thead>"
+    )
+    out.append("<tbody>")
+    for row in body:
+        out.append("<tr>" + "".join(f"<td>{cell}</td>" for cell in row) + "</tr>")
+    out.append("</tbody></table>")
+    return "\n".join(out)
 
 
 def render_blocks(lines):
@@ -137,6 +168,19 @@ def render_blocks(lines):
                 list_lines.append(lines[i])
                 i += 1
             blocks.append(render_list(list_lines))
+            continue
+
+        # Table (GitHub-flavored pipe tables)
+        if line.lstrip().startswith("|"):
+            table_lines = [line]
+            i += 1
+            while i < n and "|" in lines[i]:
+                table_lines.append(lines[i])
+                i += 1
+            if len(table_lines) >= 2 and is_table_separator(table_lines[1]):
+                blocks.append(render_table(table_lines))
+                continue
+            blocks.append(f"<p>{render_inline(' '.join(table_lines))}</p>")
             continue
 
         # Paragraph

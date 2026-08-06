@@ -62,8 +62,8 @@ python3 scripts/md2html.py notes/2026-08-06.md
   same-day navigation block on every entry page automatically. For entries
   written by hand, run `python3 scripts/add_same_day_nav.py` to refresh it.
 - Supported syntax: headings, paragraphs, fenced code blocks, blockquotes,
-  lists (with nesting), horizontal rules, inline code, bold, italic, links,
-  and images.
+  lists (with nesting), tables, horizontal rules, inline code, bold, italic,
+  links, and images.
 - A demo note showing all supported syntax lives in `demo.md` (convert it
   with `-o` to a scratch path so it does not overwrite a dated entry).
 

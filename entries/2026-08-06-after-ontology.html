@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>2026-08-06 · Ontology-Constrained KG Construction</title>
+  <link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+  <div class="container">
+    <p class="breadcrumb"><a href="../index.html">← Back to index</a></p>
+<!-- same-day-nav-start -->
+<nav class="same-day-nav">
+<span class="same-day-label">Other entries on 2026-08-06:</span> <a href="2026-08-06-existing-ontology.html">Existing Ontology — should I reuse them in my research?</a> · <a href="2026-08-06.html">PDF text extraction, chunking, and embedding pipeline</a>
+</nav>
+<!-- same-day-nav-end -->
+    <header class="entry-header">
+      <h1>Ontology-Constrained KG Construction</h1>
+      <p class="entry-date">2026-08-06</p>
+    </header>
+
+    <main class="card">
+<blockquote>
+<p><strong>Working assumption:</strong> we supply our own ontology up front.</p>
+</blockquote>
+<h2>1. What is a knowledge graph?</h2>
+<p>A way of storing facts as a network. In RDF, the atomic unit is a <strong>triple</strong> — <em>subject, predicate, object</em> — where each triple is one labeled edge between two nodes. (The object may also be a literal rather than an entity.)</p>
+<h2>2. What separates a KG from a plain graph?</h2>
+<p>No single accepted answer. The criterion I adopt here is a <strong>schema layer</strong>: the graph carries not just instance facts but a vocabulary defining what kinds of things exist and how they may relate.</p>
+<blockquote>
+<p>Under this view, the instance-level portion of the graph is the <strong>ABox</strong>. Note that most definitions (e.g. Hogan et al. 2021) place schema <em>and</em> instances inside the KG — ABox/TBox is a split within it, not a boundary around it.</p>
+</blockquote>
+<h2>3. Ontology</h2>
+<p>An ontology supplies the terminology:</p>
+<table>
+<thead><tr><th>Component</th><th>DL box</th><th>Note</th></tr></thead>
+<tbody>
+<tr><td>Classes, class axioms</td><td>TBox</td><td>subsumption, equivalence, disjointness</td></tr>
+<tr><td>Property axioms</td><td>RBox</td><td>domain/range, chains, characteristics</td></tr>
+<tr><td>Individual assertions</td><td>ABox</td><td>typing and relation facts</td></tr>
+</tbody></table>
+<p><strong>Caveat — OWL has no constraints.</strong> Open-world semantics + no unique name assumption mean OWL axioms license <em>inferences</em>, they do not reject data. Validation belongs to <strong>SHACL / ShEx</strong>.</p>
+<h3>However —</h3>
+<p>OWL uses &quot;ontology&quot; differently from the DL convention. An <code>owl:Ontology</code> is a <strong>document</strong> (a set of axioms plus annotations), and that document is free to contain individual assertions alongside class axioms. The TBox/ABox split is conceptual, not enforced by the serialization.</p>
+<h2>4. Given an ontology, schema-constrained extraction is possible</h2>
+<p>Prior art, positioned honestly:</p>
+<ul>
+<li><strong>MatKG</strong> (Venugopal &amp; Olivetti, <em>Sci Data</em> 2024) — NER over a large corpus with a fixed entity-type list; relations derived from statistical co-occurrence, yielding a <em>pseudo-ontological</em> schema. Schema is an output, not a constraint. ~70k entities, 5.4M triples.</li>
+<li><strong>MatKG-2</strong> (NeurIPS 2023 workshop) — LLM committees for ontology induction; closer to our setting.</li>
+<li><strong>Ours</strong> — the ontology (CMSO / ASMO / EMMO / MDS-Onto) is fixed <em>before</em> extraction and constrains the predicate space, with IRI provenance per triple.</li>
+</ul>
+<blockquote>
+<p>Open question: GraphRAG induces its own entity types from text rather than consuming a given ontology. Where does that leave the &quot;verifiable prior&quot; claim — complement or competitor?</p>
+</blockquote>
+    </main>
+
+    <footer class="site-footer">
+      <p><a href="../index.html">← Back to index</a></p>
+    </footer>
+  </div>
+</body>
+</html>
