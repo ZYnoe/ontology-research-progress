@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>2026-08-07 · Why TBox and ABox Are Interchangeable in OntoGen</title>
+  <link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+  <div class="container">
+    <p class="breadcrumb"><a href="../index.html">← Back to index</a></p>
+
+    <header class="entry-header">
+      <h1>Why TBox and ABox Are Interchangeable in OntoGen</h1>
+      <p class="entry-date">2026-08-07</p>
+    </header>
+
+    <main class="card">
+<p><strong>Subject of analysis:</strong> A. Oarga, M. Hart, A. M. Bran, M. Lederbauer and P. Schwaller, &quot;Scientific knowledge graph and ontology generation using open large language models,&quot; <em>Digital Discovery</em>, 2026, <strong>5</strong>, 1269–1279. DOI: <a href="https://doi.org/10.1039/d5dd00275c">10.1039/d5dd00275c</a>. Published under CC-BY 4.0; quotations below are attributed by section and page.</p>
+<hr>
+<h2>Summary of the argument</h2>
+<p>In OntoGen, whether a term belongs to the TBox (a class) or the ABox (an instance) is determined by <strong>whether it is a leaf node in the taxonomy</strong>, and leaf status changes as the incremental algorithm iterates. Combined with the fact that the pipeline extracts only a single edge type (<code>isA</code>) and adopts no upper-level ontology, <code>instanceOf</code> is effectively a post-hoc relabelling of <code>isA</code> at the leaf boundary. The TBox/ABox line is therefore not an ontological boundary but a topological one — movable, and in both directions.</p>
+<hr>
+<h2>1. The criterion is leaf vs. non-leaf, not the nature of the concept</h2>
+<p>The rule is stated in §2.2.4, <em>Knowledge graph instantiation</em> (p. 1272), and it is purely structural:</p>
+<blockquote>
+<p>&quot;the leaf nodes of the taxonomy are considered to be instances for the KG&quot;</p>
+</blockquote>
+<p>The justification appeals only to graph position:</p>
+<blockquote>
+<p>&quot;since leaf nodes have no children, they should be treated as the lowest-level concepts&quot;</p>
+</blockquote>
+<p>And the converse:</p>
+<blockquote>
+<p>&quot;nonleaf nodes, having children related through isA relationships, are considered classes in the ontological format rather than instances for the KG&quot;</p>
+</blockquote>
+<p><strong>Point:</strong> no step in the pipeline asks whether a term denotes a universal or a particular. &quot;Has children or not&quot; is the entire classifier.</p>
+<hr>
+<h2>2. <code>instanceOf</code> is a relabelling of <code>isA</code>, not an independently extracted relation</h2>
+<p>§2.2.3 (p. 1272) states that the taxonomy carries exactly one relation type:</p>
+<blockquote>
+<p>&quot;The relationships in our extracted taxonomic structures consist of isA relationships in the form of {(c_i, r, c_j) | c_i, c_j ∈ C and r = isA}&quot;</p>
+</blockquote>
+<p>The extraction function is explicitly agnostic as to which side of the boundary its output lands on — the authors say so directly in the same section:</p>
+<blockquote>
+<p>&quot;query_relationships extracts pairs (s,t) of isA relationships ... where s is a term present in the taxonomy T(k) and t is a term from the vocabulary V_i <strong>which will either represent a class or an instance in the ontological schema</strong>&quot;</p>
+</blockquote>
+<p><strong>Point:</strong> the LLM is asked a single question (&quot;is A a kind of B?&quot;) and returns untyped edges. The <code>instanceOf</code> edges shown in Fig. 1 (p. 1270) are not separately extracted; they are <code>isA</code> edges renamed once the leaf rule of §2.2.4 is applied.</p>
+<p>In description logic, subsumption (C ⊑ D) and assertion (D(a)) are distinct kinds of statement — the first transitive, the second not. Collapsing them into one edge type removes the distinction at the syntactic level, before any semantics is assigned.</p>
+<hr>
+<h2>3. Leaf status drifts across iterations, so the assignment is unstable</h2>
+<p>Algorithm 1 (p. 1272) is incremental, and the authors explain why multiple passes are required:</p>
+<blockquote>
+<p>&quot;This procedure builds a taxonomy incrementally, requiring multiple iterations since a term may not be placed in the earlier taxonomies but may find its position in a later one&quot;</p>
+</blockquote>
+<p>A term that is a leaf at iteration <em>k</em> (hence an ABox instance) becomes a non-leaf at iteration <em>k+1</em> (hence a TBox class) as soon as anything is attached beneath it. This is not hypothetical; the paper&#x27;s own descriptive statistics document it (§3.1, p. 1274):</p>
+<blockquote>
+<p>&quot;The figures illustrate how the number of isA relationships increases constantly over iterations&quot;</p>
+</blockquote>
+<p>In Fig. 4 (p. 1274) and Fig. 5 (p. 1276), the <code>#nodes</code> curve grows persistently faster than <code>#leaves</code>, which means former leaves are being internalised at scale.</p>
+<p><strong>Point:</strong> TBox/ABox membership is a function of the iteration count <em>K</em>. The same corpus and the same code, stopped at a different iteration, yield a different class/instance partition.</p>
+<hr>
+<h2>4. No upper-level ontology supplies a universal/particular criterion</h2>
+<p>This is the root cause. In §2.1 (p. 1270) the authors deliberately forgo foundational ontological commitments:</p>
+<blockquote>
+<p>&quot;our approach does not employ formal upper-level ontologies that provide foundational ontological commitments&quot;</p>
+</blockquote>
+<blockquote>
+<p>&quot;we extract domain-specific categories directly from the literature, which results in a more practical but less formally grounded taxonomic structure&quot;</p>
+</blockquote>
+<p>The qualification attached to Definition 2.1 is equally explicit:</p>
+<blockquote>
+<p>&quot;This definition represents a computational approximation to formal ontological frameworks rather than a complete logical ontology&quot;</p>
+</blockquote>
+<p><strong>Point:</strong> the TBox/ABox distinction rests on the distinction between universals and particulars, and that distinction can only be supplied axiomatically by an upper-level ontology (BFO, DOLCE, EMMO, and similar). Without one, nothing adjudicates whether <code>Aluminia</code> in Fig. 1 (p. 1270) should be an instance of <code>Support</code> or a subclass of it. The paper chooses the former:</p>
+<blockquote>
+<p>&quot;The ontology has three isA and is related to the KG through three instance of relationships&quot;</p>
+</blockquote>
+<p>Yet alumina plainly admits subclasses of its own (α-Al₂O₃, γ-Al₂O₃), so it could sit on the TBox side with equal legitimacy. Both placements are consistent with everything the pipeline knows.</p>
+<hr>
+<h2>5. The downstream task flattens the two again, which is why it costs the authors nothing</h2>
+<p>The enhanced configuration in §3.2.2 (p. 1276) merges the <code>isA</code> edges straight into the triple graph:</p>
+<blockquote>
+<p>&quot;we extend the KG by adding isA relationships. The only difference between (1) and (2) is that the second approach incorporates isA relationships&quot;</p>
+</blockquote>
+<p>In the GraphRAG pipeline that follows, all nodes are treated homogeneously; <code>isA</code> contributes nothing but additional connectivity for community detection and retrieval.</p>
+<p><strong>Point:</strong> the collapsed boundary produces no observable loss on this particular task — the win rates in Table 5 (p. 1276) remain decisive. The cost is paid elsewhere: the resulting artefact cannot support DL reasoning, consistency checking, or alignment with existing ontologies. It is a labelled graph that improves retrieval, not an ontology in the description-logic sense, and the paper is careful never to claim otherwise.</p>
+<hr>
+<h2>6. The symptoms reported in expert evaluation are consistent with this root cause</h2>
+<p>The two observations recorded in §3.2.3 (p. 1277) are characteristic of a taxonomy with no upper-level anchoring:</p>
+<blockquote>
+<p>&quot;some extracted vocabulary terms are heavily context-dependent and may lose their intended meaning when placed in a more general context&quot;</p>
+</blockquote>
+<blockquote>
+<p>&quot;the taxonomy contains instances of semantically similar concepts repeated in different parts of the structure&quot;</p>
+</blockquote>
+<p>The concrete failure cases the authors give point the same way:</p>
+<blockquote>
+<p>&quot;(e.g., Matrix isA Support Material)&quot;</p>
+</blockquote>
+<blockquote>
+<p>&quot;Electrocatalytic Activity isA Catalytic Performance and Activity isA Catalytic Performance, rather than Electrocatalytic Activity isA Activity&quot;</p>
+</blockquote>
+<p>Overall correctness, as judged by two domain experts:</p>
+<blockquote>
+<p>&quot;on average, 64.5% of the examined relationships were deemed correct by the experts&quot;</p>
+</blockquote>
+<p><strong>Point:</strong> the second example shows that even hierarchy <em>depth within the TBox</em> is unconstrained — <code>Electrocatalytic Activity</code> should attach under <code>Activity</code> but is instead flattened directly under <code>Catalytic Performance</code>. The looseness of the class/instance boundary and the looseness of the hierarchy itself have the same origin: no axioms constrain either.</p>
+<hr>
+<h2>Appendix: the circularity in the formal interface</h2>
+<p>Definition 2.2 (§2.1, p. 1270) is the only formal bridge between the ontology and the KG:</p>
+<blockquote>
+<p>&quot;S is the set of subjects where s ∈ S is an instance of a concept from the ontology ⇒ S ∈ I&quot;</p>
+</blockquote>
+<p>The definition requires subjects to be instances of ontology concepts, but membership in <em>I</em> (the instance set) is itself conferred by the leaf rule of §2.2.4. The definition is circular at this point: instances are defined as leaf nodes, and leaf nodes are defined as instances. No criterion for instancehood independent of graph shape is ever supplied.</p>
+<hr>
+<h2>Contrast: why constrained pipelines do not exhibit this</h2>
+<p>Extraction pipelines built on pre-existing formal ontologies (EMMO, CMSO/ASMO, MDS-Onto, and similar) fix the TBox in advance, with axioms attached. The LLM&#x27;s task is narrowed to populating the ABox with individuals and binding them to IRIs. Class/instance status is conferred by the ontology, not inferred from the shape of the extraction output.</p>
+<p>The cost is a marked loss of extraction freedom — new classes outside the ontology&#x27;s coverage cannot be discovered. The benefit is precisely what OntoGen gives up: TBox and ABox are not interchangeable, and therefore SHACL validation, DL reasoning, and cross-ontology alignment become meaningful operations rather than vacuous ones.</p>
+<p>If OntoGen is cited as related work, points 1, 2 and 4 above form the most compact statement of the limitation, and all three rest on the authors&#x27; own text rather than on external argument.</p>
+<hr>
+<h2>References</h2>
+<ol>
+<li>A. Oarga, M. Hart, A. M. Bran, M. Lederbauer and P. Schwaller, &quot;Scientific knowledge graph and ontology generation using open large language models,&quot; <em>Digital Discovery</em>, 2026, <strong>5</strong>, 1269–1279. DOI: 10.1039/d5dd00275c. Code and data: https://github.com/schwallergroup/ontorag/tree/main/src/OntoGen; Zenodo DOI: 10.5281/zenodo.17968980.</li>
+<li>V. Mascardi, V. Cordì and P. Rosso, <em>WOA</em>, 2007, pp. 55–64. — cited as ref. 46 in [1] for upper-level ontologies.</li>
+<li>A. Hogan, E. Blomqvist, M. Cochez, <em>et al.</em>, <em>ACM Comput. Surv.</em>, 2021, <strong>54</strong>, 1–37. — cited as ref. 47 in [1] for the ontology-as-schema relation.</li>
+<li>D. Edge, H. Trinh, N. Cheng, <em>et al.</em>, arXiv:2404.16130, 2024. — GraphRAG; ref. 10 in [1], the downstream evaluation setting discussed in §5 above.</li>
+<li>Y. Fang, Q. Zhang, N. Zhang, <em>et al.</em>, <em>Nat. Mach. Intell.</em>, 2023, <strong>5</strong>, 542–553. — ElementKG; ref. 58 in [1], the reconstruction target in §3.1.</li>
+</ol>
+    </main>
+
+    <footer class="site-footer">
+      <p><a href="../index.html">← Back to index</a></p>
+    </footer>
+  </div>
+</body>
+</html>
